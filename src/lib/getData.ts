@@ -2,7 +2,7 @@ import industryJson from "@/data/industry-ui-enriched.json";
 import integrationJson from "@/data/integration-data-updated.json";
 import type { IndustryMap, IntegrationMap } from "@/types/Data";
 
-const industries = industryJson as IndustryMap;
+const industries: any = industryJson;
 const integrations = integrationJson as IntegrationMap;
 
 /* ─────────────────────────────────────────────────────────── */
