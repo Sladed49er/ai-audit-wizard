@@ -1,35 +1,33 @@
-import industryJson from "@/data/industry-ui-enriched.json";
-import integrationJson from "@/data/integration-data-updated.json";
-import type { IndustryMap, IntegrationMap } from "@/types/Data";
+import industryJson     from "@/data/industry-ui-enriched.json";
+import integrationJson  from "@/data/integration-data-updated.json";
+import type { IntegrationMap } from "@/types/Data";
 
+/* ------------------------------------------------------------------
+   We intentionally cast the bulky JSON blobs to `any` so that
+   Next.js’ production type-checker won’t bail on structural mismatch.
+   ------------------------------------------------------------------ */
 const industries: any = industryJson;
 const integrations = integrationJson as IntegrationMap;
 
 /* ─────────────────────────────────────────────────────────── */
-/* basic helpers                                               */
+/* Helpers                                                    */
 /* ─────────────────────────────────────────────────────────── */
 
 export const getIndustries = () => Object.keys(industries);
 
-/** 
- * Returns up to 15 software names for the chosen industry.
- * Handles:
- *   • simple string arrays  
- *   • array-of-objects → uses each .name  
- *   • object maps of { key: name }
- */
+/** Up to 15 software names (handles arrays of strings *or* objects) */
 export const getIndustrySoftware = (industry: string): string[] => {
   const list = industries[industry]?.software;
 
-  // array of strings or objects
   if (Array.isArray(list)) {
+    // array of strings  OR  array of objects with .name
     return list
       .map((item: any) => (typeof item === "string" ? item : item.name))
       .slice(0, 15);
   }
 
-  // object map → array
   if (list && typeof list === "object") {
+    // object map → array
     return Object.values(list as Record<string, any>)
       .map((item: any) => (typeof item === "string" ? item : item.name))
       .slice(0, 15);
@@ -38,27 +36,19 @@ export const getIndustrySoftware = (industry: string): string[] => {
   return [];
 };
 
-/** 
- * Returns up to 10 pain-point strings.
- * Handles:
- *   • new format  { pain_points: { frictions: [ ... ] } }  
- *   • legacy simple array  
- *   • object map of { key: string }
- */
+/** Up to 10 pain-point strings (handles new + legacy shapes) */
 export const getIndustryPain = (industry: string): string[] => {
   const raw = industries[industry]?.pain_points;
 
-  // new structure: { frictions: [ ... ] }
+  // new format: { frictions: [ ... ] }
   if (raw?.frictions && Array.isArray(raw.frictions)) {
     return raw.frictions.slice(0, 10);
   }
 
   // simple array
-  if (Array.isArray(raw)) {
-    return raw.slice(0, 10);
-  }
+  if (Array.isArray(raw)) return raw.slice(0, 10);
 
-  // object map → array
+  // object map
   if (raw && typeof raw === "object") {
     return Object.values(raw as Record<string, string>).slice(0, 10);
   }
@@ -66,6 +56,6 @@ export const getIndustryPain = (industry: string): string[] => {
   return [];
 };
 
-/** integrations map is already flat: { "EZLynx": { integrates_with: [...] } } */
+/** Flat lookup in integration-data JSON */
 export const getIntegrationList = (software: string): string[] =>
   integrations[software]?.integrates_with ?? [];
