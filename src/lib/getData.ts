@@ -1,61 +1,50 @@
-import industryJson     from "@/data/industry-ui-enriched.json";
-import integrationJson  from "@/data/integration-data-updated.json";
-import type { IntegrationMap } from "@/types/Data";
+// ─────────────────────────────────────────────────────────────
+// src/lib/getData.ts
+// Centralised helpers for industry + integration look-ups
+// ─────────────────────────────────────────────────────────────
+import industryJson       from '@/data/industry-ui-enriched.json';
+import integrationJson    from '@/data/integration-data-updated.json';
 
-/* ------------------------------------------------------------------
-   We intentionally cast the bulky JSON blobs to `any` so that
-   Next.js’ production type-checker won’t bail on structural mismatch.
-   ------------------------------------------------------------------ */
-const industries: any = industryJson;
-const integrations = integrationJson as IntegrationMap;
+import type {
+  IndustryMap,
+  IntegrationMap,
+  IndustryRecord,
+} from '@/types/Data';
 
-/* ─────────────────────────────────────────────────────────── */
-/* Helpers                                                    */
-/* ─────────────────────────────────────────────────────────── */
+/* ─── raw constants ────────────────────────────────────────── */
+/*  The `satisfies` operator forces the imported JSON to match
+    the TS type without casting, so the editor stays happy.    */
+const industries   = industryJson   satisfies IndustryMap;
+const integrations = integrationJson satisfies IntegrationMap;
 
-export const getIndustries = () => Object.keys(industries);
+/* ─── industry helpers ─────────────────────────────────────── */
+export const getIndustries = (): string[] =>
+  Object.keys(industries);
 
-/** Up to 15 software names (handles arrays of strings *or* objects) */
-export const getIndustrySoftware = (industry: string): string[] => {
-  const list = industries[industry]?.software;
+/** Return software array (capped with optional slice) */
+export const getIndustrySoftware = (
+  industry: string,
+  slice = 999,
+): string[] =>
+  (industries[industry]?.software ?? []).slice(0, slice);
 
-  if (Array.isArray(list)) {
-    // array of strings  OR  array of objects with .name
-    return list
-      .map((item: any) => (typeof item === "string" ? item : item.name))
-      .slice(0, 15);
-  }
+/** Return pain-points array (capped with optional slice) */
+export const getIndustryPain = (
+  industry: string,
+  slice = 999,
+): string[] =>
+  industries[industry]?.pain_points?.frictions.slice(0, slice) ?? [];
 
-  if (list && typeof list === "object") {
-    // object map → array
-    return Object.values(list as Record<string, any>)
-      .map((item: any) => (typeof item === "string" ? item : item.name))
-      .slice(0, 15);
-  }
+/* ─── integration helpers ─────────────────────────────────── */
+export const getIntegrationMap = (): IntegrationMap => integrations;
 
-  return [];
-};
-
-/** Up to 10 pain-point strings (handles new + legacy shapes) */
-export const getIndustryPain = (industry: string): string[] => {
-  const raw = industries[industry]?.pain_points;
-
-  // new format: { frictions: [ ... ] }
-  if (raw?.frictions && Array.isArray(raw.frictions)) {
-    return raw.frictions.slice(0, 10);
-  }
-
-  // simple array
-  if (Array.isArray(raw)) return raw.slice(0, 10);
-
-  // object map
-  if (raw && typeof raw === "object") {
-    return Object.values(raw as Record<string, string>).slice(0, 10);
-  }
-
-  return [];
-};
-
-/** Flat lookup in integration-data JSON */
-export const getIntegrationList = (software: string): string[] =>
+/** Software → array of “integrates with …” strings (or empty) */
+export const getIntegratesWith = (software: string): string[] =>
   integrations[software]?.integrates_with ?? [];
+
+/* ─── fail-safe: stub data for local dev (no JSON yet) ────── */
+export const isIndustryLoaded = (key: string): key is keyof IndustryMap =>
+  key in industries;
+
+export const isSoftwareKnown = (sw: string): sw is keyof IntegrationMap =>
+  sw in integrations;
