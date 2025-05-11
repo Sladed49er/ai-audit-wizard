@@ -1,8 +1,9 @@
-// src/pages/index.tsx
 import { AuditProvider, useAuditState } from '@/context/AuditContext';
 import Step1UserInfo      from '@/components/Step1UserInfo';
 import Step2Selectors     from '@/components/Step2Selectors';
 import Step3Integrations  from '@/components/Step3Integrations';
+import Step4AutomationIdea from '@/components/Step4AutomationIdea';
+import Report             from '@/components/Report';
 
 export default function Home() {
   return (
@@ -20,11 +21,8 @@ function WizardShell() {
       {state.step === 1 && <Step1UserInfo />}
       {state.step === 2 && <Step2Selectors />}
       {state.step === 3 && <Step3Integrations />}
-      {state.step > 3  && (
-        <p className="text-gray-500">
-          Next steps coming soon…
-        </p>
-      )}
+      {state.step === 4 && <Step4AutomationIdea />}
+      {state.step === 5 && <Report />}
     </main>
   );
 }

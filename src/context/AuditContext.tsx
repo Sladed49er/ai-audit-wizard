@@ -1,3 +1,4 @@
+// src/context/AuditContext.tsx
 'use client';
 import React, { createContext, useContext, useReducer } from 'react';
 
@@ -20,11 +21,12 @@ const initialState: State = {
   integrationNotes: {},
 };
 
-export type Action =
+type Action =
   | { type: 'SET_USER'; payload: UserInfo }
   | { type: 'SET_SELECTORS'; payload: { software: string[]; painPoints: string[] } }
   | { type: 'SET_INTEGRATIONS'; payload: Record<string, string> }
   | { type: 'SET_IDEA'; payload: string }
+  | { type: 'SET_REPORT'; payload: string }
   | { type: 'NEXT' };
 
 function reducer(state: State, action: Action): State {
@@ -37,6 +39,8 @@ function reducer(state: State, action: Action): State {
       return { ...state, integrationNotes: action.payload };
     case 'SET_IDEA':
       return { ...state, automationIdea: action.payload };
+    case 'SET_REPORT':
+      return { ...state, reportHtml: action.payload };
     case 'NEXT':
       return { ...state, step: state.step + 1 };
     default:
