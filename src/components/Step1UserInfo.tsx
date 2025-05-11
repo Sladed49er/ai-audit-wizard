@@ -21,7 +21,7 @@ type FormData = z.infer<typeof schema>;
 
 /*  component  -------------------------------------------------- */
 export default function Step1UserInfo() {
-  const [state, dispatch] = useAuditState();
+  const { state, dispatch } = useAuditState();
 
   const {
     register,
