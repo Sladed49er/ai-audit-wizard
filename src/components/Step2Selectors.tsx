@@ -1,44 +1,51 @@
 'use client';
 import { useForm } from 'react-hook-form';
-import { useMemo } from 'react';
 import { useAuditState } from '@/context/AuditContext';
-import MultiCheckbox from '@/components/MultiCheckbox';
 import { getIndustrySoftware, getIndustryPain } from '@/lib/getData';
 
-interface FormData {
-  industry: string;
-  software: string[];
-  softwareOther?: string;
-  painPoints: string[];
-  painPointsOther?: string;
-}
+type FormData = { software: string[]; painPoints: string[] };
 
 export default function Step2Selectors() {
-  const [state, dispatch] = useAuditState();
-  const { control, handleSubmit, watch } = useForm<FormData>({
-    defaultValues: {
-      industry: state.user!.industry,
-      software: state.software,
-      painPoints: state.painPoints,
-    },
-  });
-  const industry = watch('industry');
-  const softwareChoices = useMemo(() => getIndustrySoftware(industry), [industry]);
-  const painChoices = useMemo(() => getIndustryPain(industry), [industry]);
+  const { state, dispatch, goBack, reset } = useAuditState();
+  const { register, handleSubmit } = useForm<FormData>();
 
   const onSubmit = (d: FormData) => {
-    const software = [...d.software, ...(d.softwareOther?.split(',').map((s) => s.trim()) ?? [])].filter(Boolean);
-    const painPoints = [...d.painPoints, ...(d.painPointsOther?.split(',').map((p) => p.trim()) ?? [])].filter(Boolean);
-    dispatch({ type: 'SET_SELECTORS', payload: { software, painPoints } });
+    dispatch({ type: 'SET_SELECTORS', payload: d });
     dispatch({ type: 'NEXT' });
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <h1 className="text-xl font-semibold mb-4">Step 2 – Choose software & challenges</h1>
-      <MultiCheckbox label="Core Software" name="software" options={softwareChoices} control={control} extraInput="Other software (comma-separated)" />
-      <MultiCheckbox label="Top Pain Points" name="painPoints" options={painChoices} control={control} extraInput="Other challenges (comma-separated)" />
-      <button type="submit" className="rounded bg-sky-600 px-4 py-2 font-semibold text-white hover:bg-sky-700">Next</button>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <h2 className="text-lg font-semibold">Select software used</h2>
+      {getIndustrySoftware(state.user!.industry).map((s) => (
+        <label key={s} className="block">
+          <input type="checkbox" value={s} {...register('software')} /> {s}
+        </label>
+      ))}
+
+      <h2 className="text-lg font-semibold mt-4">Select biggest pain-points</h2>
+      {getIndustryPain(state.user!.industry).map((p) => (
+        <label key={p} className="block">
+          <input type="checkbox" value={p} {...register('painPoints')} /> {p}
+        </label>
+      ))}
+
+      <div className="mt-6 flex justify-between">
+        <button type="button" onClick={goBack}
+          className="rounded bg-gray-200 px-4 py-2 text-gray-800 hover:bg-gray-300">
+          ← Back
+        </button>
+
+        <button type="button" onClick={reset}
+          className="rounded bg-red-100 px-4 py-2 text-red-700 hover:bg-red-200">
+          Reset form
+        </button>
+
+        <button type="submit"
+          className="rounded bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700">
+          Next →
+        </button>
+      </div>
     </form>
   );
 }

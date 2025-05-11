@@ -5,7 +5,7 @@ import { useAuditState } from '@/context/AuditContext';
 type FormData = { idea: string };
 
 export default function Step4AutomationIdea() {
-  const [state, dispatch] = useAuditState();
+  const { state, dispatch, goBack, reset } = useAuditState();
   const { register, handleSubmit } = useForm<FormData>({
     defaultValues: { idea: state.automationIdea ?? '' },
   });
@@ -26,7 +26,7 @@ export default function Step4AutomationIdea() {
     }).then((r) => r.json());
 
     dispatch({ type: 'SET_REPORT', payload: res.plan });
-    dispatch({ type: 'NEXT' }); // → Step 5 (Report)
+    dispatch({ type: 'NEXT' });
   };
 
   return (
@@ -38,12 +38,23 @@ export default function Step4AutomationIdea() {
         placeholder="Describe a repetitive task you’d love AI to handle…"
         className="w-full border rounded p-2"
       />
-      <button
-        type="submit"
-        className="rounded bg-sky-600 px-4 py-2 font-semibold text-white hover:bg-sky-700"
-      >
-        Generate Roadmap
-      </button>
+
+      <div className="mt-6 flex justify-between">
+        <button type="button" onClick={goBack}
+          className="rounded bg-gray-200 px-4 py-2 text-gray-800 hover:bg-gray-300">
+          ← Back
+        </button>
+
+        <button type="button" onClick={reset}
+          className="rounded bg-red-100 px-4 py-2 text-red-700 hover:bg-red-200">
+          Reset form
+        </button>
+
+        <button type="submit"
+          className="rounded bg-sky-600 px-4 py-2 font-semibold text-white hover:bg-sky-700">
+          Generate Roadmap →
+        </button>
+      </div>
     </form>
   );
 }
