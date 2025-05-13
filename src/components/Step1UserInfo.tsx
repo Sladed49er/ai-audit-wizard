@@ -1,83 +1,65 @@
-// ────────────────────────────────────────────────────────────────
-//  Step1UserInfo.tsx  –  full file
-// ────────────────────────────────────────────────────────────────
+/* ------------------------------------------------------------------
+   src/components/Step1UserInfo.tsx
+   Step 1 – Collect user info, validate with Zod, store in context,
+   then advance the wizard.
+   ------------------------------------------------------------------ */
+
 'use client';
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useForm, SubmitHandler }       from 'react-hook-form';
+import { zodResolver }                  from '@hookform/resolvers/zod';
+import { z }                            from 'zod';
+import { useAuditState, useAuditDispatch } from '@/context/AuditContext';
 
-import { useAuditState } from '@/context/AuditContext';
-import { getIndustries } from '@/lib/getData';
-
-/*  form schema  ------------------------------------------------ */
+/* ───────── schema & type ──────────── */
 const schema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  company: z.string().min(1),
-  industry: z.string().min(1),
+  name:     z.string().min(1, 'Name is required'),
+  email:    z.string().email('Valid e-mail required'),
+  company:  z.string().min(1, 'Company name is required'),
+  industry: z.string().min(1, 'Industry is required'),
 });
 type FormData = z.infer<typeof schema>;
 
-/*  component  -------------------------------------------------- */
 export default function Step1UserInfo() {
-  const [state, dispatch] = useAuditState();
+  /* wizard context */
+  const  state    = useAuditState();
+  const  dispatch = useAuditDispatch();
 
+  /* form */
   const {
     register,
     handleSubmit,
-    formState,
+    formState: { errors },
   } = useForm<FormData>({
-    resolver: zodResolver(schema),
-    defaultValues: state.user ?? {},
+    resolver:       zodResolver(schema),
+    // state.user may be undefined → fall back to {}
+    defaultValues:  (state.user ?? {}) as Partial<FormData>,
   });
 
-  const onSubmit = (data: FormData) => {
+  /* on submit = save + NEXT */
+  const onSubmit: SubmitHandler<FormData> = (data) => {
     dispatch({ type: 'SET_USER', payload: data });
-    dispatch({ type: 'NEXT' });
+    dispatch({ type: 'NEXT'     });
   };
 
+  /* UI */
   return (
-    <div className="rounded-2xl shadow-lg border bg-white">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-6">
-        <h1 className="text-xl font-semibold">Step 1 – Tell us about you</h1>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <h1 className="text-xl font-semibold">Step 1 — Tell us about you</h1>
 
-        <input
-          {...register('name')}
-          placeholder="Full name"
-          className="w-full border rounded p-2"
-        />
-        <input
-          {...register('email')}
-          placeholder="Email address"
-          className="w-full border rounded p-2"
-        />
-        <input
-          {...register('company')}
-          placeholder="Company name"
-          className="w-full border rounded p-2"
-        />
+      <input {...register('name')}     placeholder="Full name"     className="input" />
+      {errors.name     && <p className="error">{errors.name.message}</p>}
 
-        <select {...register('industry')} className="w-full border rounded p-2">
-          <option value="">Select your industry</option>
-          {getIndustries().map((ind) => (
-            <option key={ind} value={ind}>
-              {ind}
-            </option>
-          ))}
-        </select>
+      <input {...register('email')}    placeholder="Email address" className="input" />
+      {errors.email    && <p className="error">{errors.email.message}</p>}
 
-        {formState.errors && (
-          <p className="text-red-600 text-sm">Please fill all fields correctly.</p>
-        )}
+      <input {...register('company')}  placeholder="Company name"  className="input" />
+      {errors.company  && <p className="error">{errors.company.message}</p>}
 
-        <button
-          type="submit"
-          className="w-full rounded bg-sky-600 py-2 font-semibold text-white hover:bg-sky-700"
-        >
-          Next
-        </button>
-      </form>
-    </div>
+      <input {...register('industry')} placeholder="Industry"      className="input" />
+      {errors.industry && <p className="error">{errors.industry.message}</p>}
+
+      <button type="submit" className="btn">Next</button>
+    </form>
   );
 }

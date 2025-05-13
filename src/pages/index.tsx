@@ -20,7 +20,9 @@ export default function Home() {
 }
 
 function WizardShell({ embed }: { embed: boolean }) {
-  const [state] = useAuditState();
+  /* ← FIX HERE (no array-destructuring) */
+  const state = useAuditState();
+
   const wrapper = embed ? 'p-4' : 'mx-auto max-w-3xl p-4';
 
   return (

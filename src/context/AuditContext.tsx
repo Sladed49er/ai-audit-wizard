@@ -1,61 +1,74 @@
-// src/context/AuditContext.tsx
+/* -------------------------------------------------------------
+   src/context/AuditContext.tsx
+   Global wizard state (React Context + reducer)
+--------------------------------------------------------------*/
 'use client';
-import React, { createContext, useContext, useReducer } from 'react';
 
-type UserInfo = { name: string; email: string; company: string; industry: string };
+import { createContext, useContext, useReducer, ReactNode } from 'react';
 
-type State = {
-  step: number;
-  user?: UserInfo;
-  software: string[];
-  painPoints: string[];
-  integrationNotes: Record<string, string>;
-  automationIdea?: string;
-  reportHtml?: string;
+/* ------------ A. state shape ------------ */
+export interface AuditState {
+  step:        number;
+  name:        string;
+  business:    string;
+  industry:    string;
+  software:    string[];
+  painPoints:  string[];
+  integrations: Record<string, string>;
+  idea:        string;                 // ← NEW
+}
+
+export const initialState: AuditState = {
+  step:         1,
+  name:         '',
+  business:     '',
+  industry:     '',
+  software:     [],
+  painPoints:   [],
+  integrations: {},
+  idea:         '',                    // ← NEW
 };
 
-const initialState: State = {
-  step: 1,
-  software: [],
-  painPoints: [],
-  integrationNotes: {},
-};
-
+/* ------------ B. actions & reducer ------------ */
 type Action =
-  | { type: 'SET_USER'; payload: UserInfo }
-  | { type: 'SET_SELECTORS'; payload: { software: string[]; painPoints: string[] } }
+  | { type: 'NEXT' }
+  | { type: 'SET_USER'; payload: { name: string; business: string } }
+  | { type: 'SET_SELECTORS'; payload: { industry: string; software: string[]; painPoints: string[] } }
   | { type: 'SET_INTEGRATIONS'; payload: Record<string, string> }
-  | { type: 'SET_IDEA'; payload: string }
-  | { type: 'SET_REPORT'; payload: string }
-  | { type: 'NEXT' };
+  | { type: 'SET_IDEA'; payload: string }            // ← NEW
+  | { type: 'RESET' };
 
-function reducer(state: State, action: Action): State {
+export function auditReducer(state: AuditState, action: Action): AuditState {
   switch (action.type) {
+    case 'NEXT':
+      return { ...state, step: Math.min(state.step + 1, 5) }; // step 5 = Report
     case 'SET_USER':
-      return { ...state, user: action.payload };
+      return { ...state, ...action.payload };
     case 'SET_SELECTORS':
       return { ...state, ...action.payload };
     case 'SET_INTEGRATIONS':
-      return { ...state, integrationNotes: action.payload };
+      return { ...state, integrations: action.payload };
     case 'SET_IDEA':
-      return { ...state, automationIdea: action.payload };
-    case 'SET_REPORT':
-      return { ...state, reportHtml: action.payload };
-    case 'NEXT':
-      return { ...state, step: state.step + 1 };
+      return { ...state, idea: action.payload };              // ← NEW
+    case 'RESET':
+      return initialState;
     default:
       return state;
   }
 }
 
-const AuditCtx = createContext<[State, React.Dispatch<Action>] | undefined>(undefined);
+/* ------------ C. context helpers ------------ */
+const AuditStateCtx     = createContext<AuditState>(initialState);
+const AuditDispatchCtx  = createContext<React.Dispatch<Action>>(() => {});
 
-export const AuditProvider = ({ children }: { children: React.ReactNode }) => (
-  <AuditCtx.Provider value={useReducer(reducer, initialState)}>{children}</AuditCtx.Provider>
-);
+export function AuditProvider({ children }: { children: ReactNode }) {
+  const [state, dispatch] = useReducer(auditReducer, initialState);
+  return (
+    <AuditDispatchCtx.Provider value={dispatch}>
+      <AuditStateCtx.Provider value={state}>{children}</AuditStateCtx.Provider>
+    </AuditDispatchCtx.Provider>
+  );
+}
 
-export const useAuditState = () => {
-  const ctx = useContext(AuditCtx);
-  if (!ctx) throw new Error('AuditProvider missing');
-  return ctx;
-};
+export const useAuditState     = () => useContext(AuditStateCtx);
+export const useAuditDispatch  = () => useContext(AuditDispatchCtx);

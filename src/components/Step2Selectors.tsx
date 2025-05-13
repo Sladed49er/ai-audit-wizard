@@ -1,44 +1,54 @@
-'use client';
-import { useForm } from 'react-hook-form';
-import { useMemo } from 'react';
-import { useAuditState } from '@/context/AuditContext';
-import MultiCheckbox from '@/components/MultiCheckbox';
-import { getIndustrySoftware, getIndustryPain } from '@/lib/getData';
+/* ------------------------------------------------------------------
+   src/components/Step2Selectors.tsx
+   Step 2 – choose software + pain points with <MultiCheckbox>.
+   ------------------------------------------------------------------ */
 
-interface FormData {
-  industry: string;
-  software: string[];
-  softwareOther?: string;
-  painPoints: string[];
-  painPointsOther?: string;
-}
+'use client';
+
+import { SubmitHandler, useForm }        from 'react-hook-form';
+import { zodResolver }                   from '@hookform/resolvers/zod';
+import { z }                             from 'zod';
+import { useAuditState,
+         useAuditDispatch }              from '@/context/AuditContext';
+import { MultiCheckbox }                 from '@/components/ui/MultiCheckbox';
+
+/* dummy lists – replace with API data if you have it */
+const SOFTWARE = ['Vertafore QQCatalyst','EZLynx','NowCerts','AMS360','HawkSoft'] as const;
+const PAINS    = ['Manual onboarding processes','Disjointed communication tools'] as const;
+
+/* schema & form type */
+const schema = z.object({
+  software: z.array(z.string()).nonempty('Pick at least one item'),
+  painPoints: z.array(z.string()).nonempty('Pick at least one item'),
+});
+type FormData = z.infer<typeof schema>;
 
 export default function Step2Selectors() {
-  const [state, dispatch] = useAuditState();
-  const { control, handleSubmit, watch } = useForm<FormData>({
-    defaultValues: {
-      industry: state.user!.industry,
-      software: state.software,
-      painPoints: state.painPoints,
-    },
-  });
-  const industry = watch('industry');
-  const softwareChoices = useMemo(() => getIndustrySoftware(industry), [industry]);
-  const painChoices = useMemo(() => getIndustryPain(industry), [industry]);
+  const  state    = useAuditState();
+  const  dispatch = useAuditDispatch();
 
-  const onSubmit = (d: FormData) => {
-    const software = [...d.software, ...(d.softwareOther?.split(',').map((s) => s.trim()) ?? [])].filter(Boolean);
-    const painPoints = [...d.painPoints, ...(d.painPointsOther?.split(',').map((p) => p.trim()) ?? [])].filter(Boolean);
-    dispatch({ type: 'SET_SELECTORS', payload: { software, painPoints } });
-    dispatch({ type: 'NEXT' });
+  /* form */
+  const { register, handleSubmit, formState:{ errors } } = useForm<FormData>({
+    resolver:      zodResolver(schema),
+    defaultValues: (state.selectors ?? {}) as Partial<FormData>,
+  });
+
+  const onSubmit: SubmitHandler<FormData> = data => {
+    dispatch({ type:'SET_SELECTORS', payload:data });
+    dispatch({ type:'NEXT' });
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <h1 className="text-xl font-semibold mb-4">Step 2 – Choose software & challenges</h1>
-      <MultiCheckbox label="Core Software" name="software" options={softwareChoices} control={control} extraInput="Other software (comma-separated)" />
-      <MultiCheckbox label="Top Pain Points" name="painPoints" options={painChoices} control={control} extraInput="Other challenges (comma-separated)" />
-      <button type="submit" className="rounded bg-sky-600 px-4 py-2 font-semibold text-white hover:bg-sky-700">Next</button>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <h1 className="text-xl font-semibold">Step 2 — Select software & pain-points</h1>
+
+      <MultiCheckbox label="Software in use" name="software" items={SOFTWARE} register={register} />
+      {errors.software && <p className="error">{errors.software.message}</p>}
+
+      <MultiCheckbox label="Pain points" name="painPoints" items={PAINS} register={register} />
+      {errors.painPoints && <p className="error">{errors.painPoints.message}</p>}
+
+      <button type="submit" className="btn">Next</button>
     </form>
   );
 }

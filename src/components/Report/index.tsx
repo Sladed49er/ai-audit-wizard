@@ -26,7 +26,7 @@ import RiskTable          from './RiskTable';
    ---------------------------------------------------------------- */
 export default function Report() {
   /* wizard context ------------------------------------------------ */
-  const [state]       = useAuditState();
+  const state      = useAuditState();
 
   /* LLM JSON + error state --------------------------------------- */
   const [llm,  setLlm] = useState<LlmReport | null>(null);
