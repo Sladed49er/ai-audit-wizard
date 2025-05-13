@@ -1,29 +1,15 @@
-export default function ImpactMatrix({
-  data,
-}: {
-  data: { item: string; effort: number; impact: number }[];
-}) {
+/* ---------------------------------------------
+   Dumps impact-matrix JSON (high / medium / low)
+   --------------------------------------------- */
+export default function ImpactMatrix({ data }: { data: unknown }) {
+  if (data == null) return null;
+
   return (
-    <div className="card">
-      <h2 className="text-lg font-semibold mb-3">Impact Matrix</h2>
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="font-semibold">
-            <th className="p-2">Item</th>
-            <th className="p-2">Effort</th>
-            <th className="p-2">Impact</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map(r => (
-            <tr key={r.item} className="border-t">
-              <td className="p-2">{r.item}</td>
-              <td className="p-2 text-center">{r.effort}</td>
-              <td className="p-2 text-center">{r.impact}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <article className="card prose">
+      <h3 className="font-semibold mb-2">Impact Matrix</h3>
+      <pre className="whitespace-pre-wrap text-sm">
+        {JSON.stringify(data, null, 2)}
+      </pre>
+    </article>
   );
 }

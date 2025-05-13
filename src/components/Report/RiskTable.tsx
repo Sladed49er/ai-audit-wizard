@@ -1,27 +1,15 @@
-export default function RiskTable({
-  data,
-}: {
-  data: { risk: string; mitigation: string }[];
-}) {
+/* ---------------------------------------------
+   Dumps risks JSON
+   --------------------------------------------- */
+export default function RiskTable({ data }: { data: unknown }) {
+  if (data == null) return null;
+
   return (
-    <div className="card">
-      <h2 className="text-lg font-semibold mb-3">Risk & Mitigation</h2>
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="font-semibold">
-            <th className="p-2">Risk</th>
-            <th className="p-2">Mitigation</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map(r => (
-            <tr key={r.risk} className="border-t">
-              <td className="p-2 align-top">{r.risk}</td>
-              <td className="p-2">{r.mitigation}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <article className="card prose">
+      <h3 className="font-semibold mb-2">Risks &amp; Mitigations</h3>
+      <pre className="whitespace-pre-wrap text-sm">
+        {JSON.stringify(data, null, 2)}
+      </pre>
+    </article>
   );
 }

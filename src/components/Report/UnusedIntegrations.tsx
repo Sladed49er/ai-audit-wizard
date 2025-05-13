@@ -1,18 +1,15 @@
-export default function UnusedIntegrations({
-  data,
-}: {
-  data: { app: string; suggestion: string }[];
-}) {
+/* ---------------------------------------------
+   Dumps any “unusedIntegrations” JSON
+   --------------------------------------------- */
+export default function UnusedIntegrations({ data }: { data: unknown }) {
+  if (data == null) return null;
+
   return (
-    <div className="card">
-      <h2 className="text-lg font-semibold mb-3">Unused Integrations</h2>
-      <ul className="space-y-1">
-        {data.map(row => (
-          <li key={row.app}>
-            <strong>{row.app}</strong> — {row.suggestion}
-          </li>
-        ))}
-      </ul>
-    </div>
+    <article className="card prose">
+      <h3 className="font-semibold mb-2">Unused Integrations</h3>
+      <pre className="whitespace-pre-wrap text-sm">
+        {JSON.stringify(data, null, 2)}
+      </pre>
+    </article>
   );
 }

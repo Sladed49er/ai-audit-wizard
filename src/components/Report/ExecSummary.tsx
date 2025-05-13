@@ -1,8 +1,13 @@
+/* ---------------------------------------------
+   Shows the one-paragraph executive summary
+   --------------------------------------------- */
 export default function ExecSummary({ data }: { data: string }) {
+  if (!data) return null;
+
   return (
-    <div className="card">
-      <h2 className="text-lg font-semibold mb-3">Executive Summary</h2>
-      <p className="whitespace-pre-line text-gray-700">{data}</p>
-    </div>
+    <article className="card prose">
+      <h3 className="font-semibold mb-2">Executive Summary</h3>
+      <p>{data}</p>
+    </article>
   );
 }

@@ -1,18 +1,15 @@
-/* -------------------------------------------------------------------
+/* -----------------------------------------------------------------
    src/pages/api/generateReport.ts
-   Calls OpenAI (GPT-4o or fallback) and guarantees JSON output.
-   ------------------------------------------------------------------- */
-
+   Calls OpenAI ChatCompletion and always returns *pure JSON*.
+   ---------------------------------------------------------------- */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -22,47 +19,40 @@ export default async function handler(
   const { selectors, userInfo } = req.body;
 
   try {
-    /* ── GPT call ─────────────────────────────────────────────── */
+    /* ---- ask GPT -------------------------------------------------- */
     const chat = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-      max_tokens: 2200,
-      temperature: 0.4,
+      model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo-0125',
+      temperature: 0.3,
+      max_tokens : 16384,
       messages: [
         {
           role: 'system',
           content: `
-You are an AI Transformation Consultant.
-Return pure JSON with keys:
-execSummary, unusedIntegrations, impactMatrix,
-playbooks, rollout, risks.
-NO markdown, no code fences.
+You are an AI transformation consultant.
+Return *pure JSON only* (no code fences, no markdown) with keys:
+execSummary, unusedIntegrations, impactMatrix, playbooks, rollout, risks.
           `.trim(),
         },
-        { role: 'user', content: JSON.stringify({ selectors, userInfo }) },
+        {
+          role: 'user',
+          content: JSON.stringify({ selectors, userInfo }),
+        },
       ],
     });
 
-    /* ── clean + parse ────────────────────────────────────────── */
-    const raw = chat.choices[0].message.content ?? '{}';
-
-    const cleaned = raw
-      .replace(/^[\s\S]*?```(?:json|html)?\s*/i, '') // remove leading fence
-      .replace(/```[\s\n]*$/i, '')                  // remove trailing fence
-      .trim();
-
-    let json;
+    const raw = (chat.choices[0].message.content || '').trim();
+    /* ---- validate JSON ------------------------------------------- */
     try {
-      json = JSON.parse(cleaned);
-    } catch (e) {
-      console.error('❌  GPT returned non-JSON. Raw:', cleaned);
-      return res
-        .status(500)
-        .json({ error: 'LLM returned non-JSON', raw: cleaned });
+      const json = JSON.parse(raw);
+      return res.status(200).json(json);
+    } catch {
+      return res.status(500).json({
+        error: 'LLM returned non-JSON',
+        raw,                 // let the frontend log it
+      });
     }
-
-    return res.status(200).json(json);
   } catch (err: any) {
-    console.error('❌  OpenAI error', err);
-    return res.status(500).json({ error: err.message });
+    console.error(err);
+    return res.status(500).json({ error: err.message || String(err) });
   }
 }
