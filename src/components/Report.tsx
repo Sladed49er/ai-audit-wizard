@@ -1,38 +1,59 @@
+/* --------------------------------------------------------------
+   Final report view  (print-friendly)
+   -------------------------------------------------------------- */
 'use client';
-import { useRef } from 'react';
-import { useAuditState } from '@/context/AuditContext';
+
+import { useRef }         from 'react';
 import { useReactToPrint } from 'react-to-print';
 
+import { useAuditState }   from '@/context/AuditContext';
+
 export default function Report() {
-  const [state] = useAuditState();
-  const ref = useRef<HTMLDivElement>(null);
-  const print = useReactToPrint({ content: () => ref.current });
+  /*  useAuditState returns THE STATE OBJECT, not an array */
+  const state = useAuditState();
 
-  if (!state.reportHtml) return <p>Generating report…</p>;
-
-  const sendEmail = async () => {
-    await fetch('/api/sendReport', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: state.user?.email,
-        html: state.reportHtml,
-      }),
-    });
-    alert('Roadmap emailed!');
-  };
+  const ref   = useRef<HTMLDivElement>(null);
+  const print = useReactToPrint({
+    content: () => ref.current,
+  });
 
   return (
-    <>
-      <div ref={ref} dangerouslySetInnerHTML={{ __html: state.reportHtml }} />
-      <div className="mt-6 flex gap-3">
-        <button onClick={print} className="rounded bg-red-600 px-4 py-2 text-white">
-          🖨️ Print / Save PDF
-        </button>
-        <button onClick={sendEmail} className="rounded bg-emerald-600 px-4 py-2 text-white">
-          📧 Email Me
-        </button>
+    <section className="mx-auto max-w-4xl space-y-6 p-4">
+      <h1 className="text-2xl font-semibold text-center">AI Audit Report</h1>
+
+      {/* printable area ------------------------------------------------ */}
+      <div ref={ref} className="space-y-4 rounded border bg-white p-6 shadow">
+        <h2 className="text-xl font-medium">Snapshot</h2>
+        <p>
+          <strong>Name:</strong> {state.name} <br />
+          <strong>Company:</strong> {state.company} <br />
+          <strong>Industry:</strong> {state.industry}
+        </p>
+
+        <h2 className="text-xl font-medium">Selected Software</h2>
+        <ul className="list-disc pl-6">
+          {state.software.map((s) => (
+            <li key={s}>{s}</li>
+          ))}
+        </ul>
+
+        <h2 className="text-xl font-medium">Pain Points</h2>
+        <ul className="list-disc pl-6">
+          {state.painPoints.map((p) => (
+            <li key={p}>{p}</li>
+          ))}
+        </ul>
+
+        <h2 className="text-xl font-medium">Automation Wish</h2>
+        <p>{state.idea}</p>
       </div>
-    </>
+
+      <button
+        onClick={print}
+        className="mx-auto block rounded bg-sky-600 px-8 py-2 font-semibold text-white hover:bg-sky-700"
+      >
+        Print / Save PDF
+      </button>
+    </section>
   );
 }

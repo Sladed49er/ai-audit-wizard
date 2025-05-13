@@ -1,48 +1,49 @@
+/**
+ * POST /api/generatePlan
+ * Body: { idea: string }
+ *
+ * Returns: { roadmap: string }
+ */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 
-/* use GPT-4o if you set OPENAI_API_KEY, else return a stub plan */
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY, // set in .env.local and Vercel dashboard
+});
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const body = req.body;
-
-  /* ─── fallback for local dev without a key ─── */
-  if (!process.env.OPENAI_API_KEY) {
-    return res.status(200).json({ plan: getStubPlan(body) });
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).end('Method Not Allowed');
   }
 
   try {
+    const { idea } = req.body as { idea?: string };
+
+    if (!idea || idea.trim().length < 10) {
+      return res.status(400).json({ error: 'Idea is too short.' });
+    }
+
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
-      temperature: 0.7,
       messages: [
-        { role: 'system', content: 'You are an AI consultant. Output HTML for a roadmap.' },
-        { role: 'user', content: JSON.stringify(body) },
+        {
+          role: 'system',
+          content:
+            'You are an AI consultant. Build a concise 3-step automation roadmap.',
+        },
+        { role: 'user', content: `We’d love AI to handle: ${idea}` },
       ],
+      max_tokens: 250,
     });
-    res.status(200).json({ plan: completion.choices[0].message.content });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message ?? 'OpenAI error' });
-  }
-}
 
-/* ─── simple stub so local flow always works ─── */
-function getStubPlan(data: any) {
-  return /* html */ `
-    <h1>AI Opportunity Roadmap</h1>
-    <h2>Top 3 Opportunities</h2>
-    <ul>
-      <li>Automate lead data entry</li>
-      <li>Predict churn risk</li>
-      <li>Voice-to-note for calls</li>
-    </ul>
-    <h2>14-Day Quick-Start</h2>
-    <ol>
-      <li>Identify stakeholders</li>
-      <li>Map current process</li>
-      <li>Pick pilot workflow</li>
-      <!-- … -->
-    </ol>
-  `;
+    const roadmap = completion.choices[0].message?.content ?? 'No response.';
+    res.status(200).json({ roadmap });
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to generate roadmap.' });
+  }
 }
