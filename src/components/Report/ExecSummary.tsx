@@ -1,13 +1,14 @@
-/* ---------------------------------------------
-   Shows the one-paragraph executive summary
-   --------------------------------------------- */
-export default function ExecSummary({ data }: { data: string }) {
-  if (!data) return null;
+'use client';
 
+interface Props {
+  data: string;
+}
+
+export default function ExecSummary({ data }: Props) {
   return (
-    <article className="card prose">
-      <h3 className="font-semibold mb-2">Executive Summary</h3>
-      <p>{data}</p>
-    </article>
+    <section className="rounded border p-6 shadow">
+      <h2 className="text-xl font-semibold mb-2">Executive Summary</h2>
+      <p className="text-gray-700 leading-relaxed">{data}</p>
+    </section>
   );
 }

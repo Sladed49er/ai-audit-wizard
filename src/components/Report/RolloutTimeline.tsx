@@ -1,15 +1,29 @@
-/* ---------------------------------------------
-   Dumps rollout / phases JSON
-   --------------------------------------------- */
-export default function RolloutTimeline({ data }: { data: unknown }) {
-  if (data == null) return null;
+'use client';
 
+interface Timeline { [phase: string]: string }
+interface Props { data: Timeline }
+
+export default function RolloutTimeline({ data }: Props) {
   return (
-    <article className="card prose">
-      <h3 className="font-semibold mb-2">Roll-out Timeline</h3>
-      <pre className="whitespace-pre-wrap text-sm">
-        {JSON.stringify(data, null, 2)}
-      </pre>
-    </article>
+    <section className="rounded border p-6 shadow">
+      <h2 className="text-xl font-semibold mb-4">Roll-out Timeline</h2>
+
+      <table className="min-w-full border-collapse text-sm">
+        <thead>
+          <tr className="bg-gray-50">
+            <th className="px-4 py-2 border text-left">Phase</th>
+            <th className="px-4 py-2 border text-left">Duration</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.entries(data).map(([phase, range], i) => (
+            <tr key={phase} className={i % 2 ? 'bg-gray-50/50' : ''}>
+              <td className="px-4 py-2 border font-medium">{phase}</td>
+              <td className="px-4 py-2 border">{range}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
   );
 }

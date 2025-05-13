@@ -1,47 +1,40 @@
-/* --------------------------------------------------------------
-   Step 4 – capture the user’s #1 AI / automation wish
-   -------------------------------------------------------------- */
 'use client';
 
-import { useState }   from 'react';
-import { z }          from 'zod';
-import { useForm }    from 'react-hook-form';
-import { zodResolver }from '@hookform/resolvers/zod';
+import { useState }       from 'react';
+import { useForm }        from 'react-hook-form';
+import { z }              from 'zod';
+import { zodResolver }    from '@hookform/resolvers/zod';
 
 import { useAuditDispatch } from '@/context/AuditContext';
-import useGeneratePlan from '../hooks/useGeneratePlan';  // ← your existing hook
+import useGenerateRoadmap   from '@/hooks/useGenerateRoadmap';
 
-/* simple schema – at least 10 chars so people actually type  */
 const schema = z.object({
   idea: z.string().min(10, 'Please give a little more detail.'),
 });
 type Form = z.infer<typeof schema>;
 
 export default function Step4AutomationIdea() {
-  const dispatch           = useAuditDispatch();
-  const { plan, loading }  = useGeneratePlan();
+  const dispatch                  = useAuditDispatch();
+  const { generate, loading }     = useGenerateRoadmap();
   const [submitted, setSubmitted] = useState(false);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<Form>({
-    resolver: zodResolver(schema),
-  });
+  } = useForm<Form>({ resolver: zodResolver(schema) });
 
-  const onSubmit = async (data: Form) => {
-    /* save to global state so the report can print it ------------- */
-    dispatch({ type: 'SET_IDEA', payload: data.idea });
+  const onSubmit = async ({ idea }: Form) => {
+    dispatch({ type: 'SET_IDEA', payload: idea });
     setSubmitted(true);
-    await plan({ idea: data.idea });       // call your hook
-    dispatch({ type: 'NEXT' });            // go to Report step
+    await generate();
+    dispatch({ type: 'NEXT' });
   };
 
   return (
     <section className="mx-auto max-w-4xl space-y-6 p-4">
       <h1 className="text-2xl font-semibold text-center">
-        Step 4 – Your #1 Automation Wish
+        Step&nbsp;4 – Your&nbsp;#1 Automation Wish
       </h1>
 
       <form

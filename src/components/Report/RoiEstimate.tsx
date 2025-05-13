@@ -1,11 +1,12 @@
-export default function RoiEstimate({ pain }:{pain:any[]}) {
-  const hoursSaved = pain.length * 2; // crude estimate
-  const rate = 65;
-  const annual = hoursSaved * rate * 52;
+'use client';
+
+interface Props { data: string }
+
+export default function RoiEstimate({ data }: Props) {
   return (
-    <div className="card">
-      <h2 className="font-semibold">Estimated ROI</h2>
-      <p>Potential annual savings: <strong>${annual.toLocaleString()}</strong></p>
-    </div>
+    <section className="rounded border-l-4 border-green-600 bg-green-50 p-6 shadow">
+      <h2 className="text-xl font-semibold mb-2">ROI Estimate</h2>
+      <p className="text-gray-800 leading-relaxed">{data}</p>
+    </section>
   );
 }

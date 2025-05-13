@@ -1,35 +1,26 @@
-/* -----------------------------------------------------------------
-   src/lib/reportLLM.ts
-   Sends selectors + userInfo to /api/generateReport and returns the
-   parsed JSON.  Any backend error is surfaced to the caller.
-   ---------------------------------------------------------------- */
+/**
+ * fetchLLMReport() – wraps the /api endpoint and returns typed JSON
+ */
+import { AuditState } from '@/context/AuditContext';
+
 export interface LlmReport {
   execSummary:        string;
-  unusedIntegrations: unknown;
-  impactMatrix:       unknown;
-  playbooks:          unknown;
-  rollout:            unknown;
-  risks:              unknown;
+  unusedIntegrations: string;
+  impactMatrix:       string;
+  playbooks:          string;
+  rollout:            string;
+  risks:              string;
 }
 
-export async function fetchLLMReport(state: unknown): Promise<LlmReport> {
-  const res  = await fetch('/api/generateReport', {
+export async function fetchLLMReport(
+  state: AuditState
+): Promise<LlmReport> {
+  const res = await fetch('/api/generateReport', {
     method : 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body   : JSON.stringify({
-      selectors: (state as any).selectors,
-      userInfo : (state as any).userInfo,
-    }),
+    body   : JSON.stringify({ state }),
   });
 
-  const text = await res.text();                         // <- ALWAYS read
-  console.log('📡 /api/generateReport raw →', text);     //    what came back
-
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${text}`);
-
-  try {
-    return JSON.parse(text);
-  } catch (e) {
-    throw new Error(`LLM returned non-JSON:\n${text}`);
-  }
+  if (!res.ok) throw new Error(await res.text());
+  return (await res.json()) as LlmReport;
 }

@@ -1,46 +1,14 @@
-/* -----------------------------------------------------------------
-   src/components/Report/QuickWins.tsx
-   Shows 3–5 quick-win recommendations
-   ----------------------------------------------------------------- */
+'use client';
 
-import type { EnrichedStackRow } from '@/lib/reportHelpers';
+interface Props { data: string[] }
 
-interface QuickWinProps {
-  stack: EnrichedStackRow[];
-  pain: {
-    pain: string;
-    suggestion: string;
-  }[];
-}
-
-export default function QuickWins({ stack, pain }: QuickWinProps) {
-  /* ─ trivial sample logic – replace with your real algo ─ */
-  const wins = [
-    ...(pain.slice(0, 2).map(p => ({
-      title: `Fix: ${p.pain}`,
-      desc: p.suggestion,
-    }))),
-    ...(stack
-      .filter(s => s.integrationCount === 0)
-      .slice(0, 1)
-      .map(s => ({
-        title: `Integrate ${s.name}`,
-        desc: `Connect ${s.name} with CRM to remove manual re-keying.`,
-      }))),
-  ];
-
+export default function QuickWins({ data }: Props) {
   return (
-    <div className="card">
-      <h2 className="text-lg font-semibold mb-4">Quick Wins (next 30 days)</h2>
-
-      <ul className="space-y-3">
-        {wins.map(win => (
-          <li key={win.title}>
-            <h3 className="font-medium">{win.title}</h3>
-            <p className="text-sm text-gray-600">{win.desc}</p>
-          </li>
-        ))}
+    <section className="rounded border p-6 shadow">
+      <h2 className="text-xl font-semibold mb-2">Quick Wins (90 days)</h2>
+      <ul className="list-disc pl-6 space-y-1">
+        {data.map(item => <li key={item}>{item}</li>)}
       </ul>
-    </div>
+    </section>
   );
 }

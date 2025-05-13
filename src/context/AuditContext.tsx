@@ -1,50 +1,50 @@
 /* -------------------------------------------------------------
-   Global wizard state (React Context + reducer)
+   Global wizard state (Context + reducer)
    ------------------------------------------------------------*/
 'use client';
 
 import { createContext, useContext, useReducer, ReactNode } from 'react';
 
-/* ── A. state shape ─────────────────────────────────────────── */
+/* ---- state shape ------------------------------------------ */
 export interface AuditState {
-  step:         number;
-  /* user info */
-  name:         string;
-  email:        string;
-  company:      string;
-  industry:     string;
-  /* wizard selections */
-  software:     string[];
-  painPoints:   string[];
+  step:       number;
+  name:       string;
+  email:      string;
+  company:    string;
+  industry:   string;
+  software:   string[];
+  painPoints: string[];
   integrations: Record<string, string>;
-  idea:         string;
+  idea:       string;
+  report?:    any;              // ← NEW: full JSON from OpenAI
 }
 
 export const initialState: AuditState = {
-  step:         1,
-  name:         '',
-  email:        '',
-  company:      '',
-  industry:     '',
-  software:     [],
-  painPoints:   [],
+  step: 1,
+  name: '',
+  email: '',
+  company: '',
+  industry: '',
+  software: [],
+  painPoints: [],
   integrations: {},
-  idea:         '',
+  idea: '',
 };
 
-/* ── B. actions & reducer ───────────────────────────────────── */
+/* ---- actions ---------------------------------------------- */
 type Action =
   | { type: 'NEXT' }
-  | { type: 'SET_USER';         payload: Pick<AuditState, 'name' | 'email' | 'company' | 'industry'> }
-  | { type: 'SET_SELECTORS';    payload: Pick<AuditState, 'software' | 'painPoints'> }
-  | { type: 'SET_INTEGRATION';  payload: { tool: string; value: string } }
-  | { type: 'SET_IDEA';         payload: string }
+  | { type: 'SET_USER';        payload: Pick<AuditState, 'name'|'email'|'company'|'industry'> }
+  | { type: 'SET_SELECTORS';   payload: Pick<AuditState, 'software'|'painPoints'> }
+  | { type: 'SET_INTEGRATION'; payload: { tool: string; value: string } }
+  | { type: 'SET_IDEA';        payload: string }
+  | { type: 'SET_REPORT';      payload: any }          // ← NEW
   | { type: 'RESET' };
 
-function auditReducer(state: AuditState, action: Action): AuditState {
+function reducer(state: AuditState, action: Action): AuditState {
   switch (action.type) {
     case 'NEXT':
-      return { ...state, step: Math.min(state.step + 1, 5) };
+      return { ...state, step: state.step + 1 };
 
     case 'SET_USER':
       return { ...state, ...action.payload };
@@ -61,6 +61,9 @@ function auditReducer(state: AuditState, action: Action): AuditState {
     case 'SET_IDEA':
       return { ...state, idea: action.payload };
 
+    case 'SET_REPORT':          // ← NEW
+      return { ...state, report: action.payload };
+
     case 'RESET':
       return initialState;
 
@@ -69,12 +72,12 @@ function auditReducer(state: AuditState, action: Action): AuditState {
   }
 }
 
-/* ── C. context helpers ────────────────────────────────────── */
+/* ---- provider --------------------------------------------- */
 const StateCtx    = createContext<AuditState>(initialState);
 const DispatchCtx = createContext<React.Dispatch<Action>>(() => {});
 
 export function AuditProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(auditReducer, initialState);
+  const [state, dispatch] = useReducer(reducer, initialState);
   return (
     <DispatchCtx.Provider value={dispatch}>
       <StateCtx.Provider value={state}>{children}</StateCtx.Provider>
