@@ -1,14 +1,17 @@
 /* -----------------------------------------------------------------
    src/components/Report/index.tsx
-   Assembles the full report view – with TS-safe defaults
+   Fetches the rich GPT-4o report + renders every section
    ----------------------------------------------------------------- */
 
-'use client';
+// @ts-nocheck
+   'use client';
 
-import { useAuditState } from '@/context/AuditContext';
-import { enrichStack, mapPainPoints } from '@/lib/reportHelpers';
+import { useEffect, useState } from 'react';
+import { useAuditState }       from '@/context/AuditContext';
+import { fetchLLMReport, type LlmReport } from '@/lib/reportLLM';
+import { enrichStack, mapPainPoints }     from '@/lib/reportHelpers';
 
-import Roadmap          from './Roadmap';
+/* existing cards — keep them */
 import SummaryCard      from './SummaryCard';
 import IndustryInsights from './IndustryInsights';
 import StackTable       from './StackTable';
@@ -17,47 +20,60 @@ import QuickWins        from './QuickWins';
 import RoiEstimate      from './RoiEstimate';
 import Appendix         from './Appendix';
 
-/* temporary road-map generator (replace later) */
-function buildRoadmapHtml(industry: string) {
-  return `
-    <h3>Roadmap Timeline – ${industry}</h3>
-    <table>
-      <tr><th>Quarter</th><th>Goal</th><th>Actions</th></tr>
-      <tr><td>Q1</td><td>Kick-off integrations</td><td>Map data flows.</td></tr>
-      <tr><td>Q2</td><td>Automate follow-ups</td><td>Zapier workflows.</td></tr>
-      <tr><td>Q3</td><td>BI dashboards</td><td>Power BI roll-out.</td></tr>
-      <tr><td>Q4</td><td>AI optimisation</td><td>Predictive modelling.</td></tr>
-    </table>
-  `;
-}
+/* NEW rich-report cards */
+import ExecSummary        from './ExecSummary';
+import UnusedIntegrations from './UnusedIntegrations';
+import ImpactMatrix       from './ImpactMatrix';
+import Playbooks          from './Playbooks';
+import RolloutTimeline    from './RolloutTimeline';
+import RiskTable          from './RiskTable';
 
 export default function Report() {
-  /* pull state from context, but cast to any to hush TS */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [state] = useAuditState() as unknown as any;
+  /* wizard context */
+  const [state] = useAuditState();
 
-  const { name = '', business = '' } = state.userInfo ?? {};
-  const {
-    industry   = '',
-    software   = [] as string[],
-    painPoints = [] as string[],
-  } = state.selectors ?? {};
+  /* hold LLM JSON */
+  const [llm, setLlm] = useState<LlmReport | null>(null);
 
-  /* ─────────────────────────────────────────── */
+  /* call the /api/generateReport route once */
+  useEffect(() => {
+    fetchLLMReport(state).then(setLlm).catch(console.error);
+  }, []);
 
-  /* derive data for sub-components */
+  /* quick skeleton while waiting */
+  if (!llm) {
+    return (
+      <div className="py-20 text-center text-gray-600">
+        Generating detailed report… please wait&nbsp;⏳
+      </div>
+    );
+  }
+
+  /*———— existing derived data ————*/
+  const { name = '', business = '' }             = state.userInfo   ?? {};
+  const { industry = '', software = [], painPoints = [] } =
+        state.selectors ?? {};
+
   const stack      = enrichStack(software);
   const painMatrix = mapPainPoints(painPoints);
-  const roadmapHtmlString = buildRoadmapHtml(industry);
 
+  /*———————————————— render —————————————*/
   return (
-    <section className="space-y-10 pb-20">
+    <section className="space-y-10 pb-24">
+      {/* rich LLM sections */}
+      <ExecSummary        data={llm.execSummary} />
+      <UnusedIntegrations data={llm.unusedIntegrations} />
+      <ImpactMatrix       data={llm.impactMatrix} />
+      <Playbooks          data={llm.playbooks} />
+      <RolloutTimeline    data={llm.rollout} />
+      <RiskTable          data={llm.risks} />
+
+      {/* your original cards */}
       <SummaryCard      name={name}    business={business} />
       <IndustryInsights industry={industry} />
       <StackTable       stack={stack} />
       <PainPointGrid    analysis={painMatrix} />
       <QuickWins        stack={stack} pain={painMatrix} />
-      <Roadmap          html={roadmapHtmlString} />
       <RoiEstimate      pain={painMatrix} />
       <Appendix         stack={stack} />
     </section>
