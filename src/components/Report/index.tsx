@@ -1,17 +1,22 @@
+// @ts-nocheck
 /* -----------------------------------------------------------------
    src/components/Report/index.tsx
-   Fetches the rich GPT-4o report + renders every section
+   Pulls the GPT-4o JSON via /api/generateReport and renders the
+   full consultant-grade report.
    ----------------------------------------------------------------- */
 
-// @ts-nocheck
-   'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useAuditState }       from '@/context/AuditContext';
-import { fetchLLMReport, type LlmReport } from '@/lib/reportLLM';
-import { enrichStack, mapPainPoints }     from '@/lib/reportHelpers';
+import {
+  fetchLLMReport,
+  type LlmReport,
+} from '@/lib/reportLLM';
 
-/* existing cards — keep them */
+import { enrichStack, mapPainPoints } from '@/lib/reportHelpers';
+
+/* — existing cards — */
 import SummaryCard      from './SummaryCard';
 import IndustryInsights from './IndustryInsights';
 import StackTable       from './StackTable';
@@ -20,7 +25,7 @@ import QuickWins        from './QuickWins';
 import RoiEstimate      from './RoiEstimate';
 import Appendix         from './Appendix';
 
-/* NEW rich-report cards */
+/* — new rich-report cards — */
 import ExecSummary        from './ExecSummary';
 import UnusedIntegrations from './UnusedIntegrations';
 import ImpactMatrix       from './ImpactMatrix';
@@ -29,38 +34,43 @@ import RolloutTimeline    from './RolloutTimeline';
 import RiskTable          from './RiskTable';
 
 export default function Report() {
-  /* wizard context */
+  /* wizard selections */
   const [state] = useAuditState();
 
-  /* hold LLM JSON */
+  /* LLM JSON holder */
   const [llm, setLlm] = useState<LlmReport | null>(null);
+  const [err, setErr] = useState<string | null>(null);
 
-  /* call the /api/generateReport route once */
+  /* call /api/generateReport once per wizard state */
   useEffect(() => {
-    fetchLLMReport(state).then(setLlm).catch(console.error);
-  }, []);
+    fetchLLMReport(state)
+      .then(data => {
+        console.log('✅ LLM JSON', data);
+        setLlm(data);
+      })
+      .catch(e => {
+        console.error('❌ LLM fetch failed', e);
+        setErr(e.message || 'Unknown error');
+      });
+  }, [state]);
 
-  /* quick skeleton while waiting */
-  if (!llm) {
-    return (
-      <div className="py-20 text-center text-gray-600">
-        Generating detailed report… please wait&nbsp;⏳
-      </div>
-    );
-  }
+  /* graceful waiting / error UI */
+  if (err)   return <p className="p-10 text-red-600">Error: {err}</p>;
+  if (!llm)  return <p className="p-10">Generating report… please wait ⏳</p>;
 
-  /*———— existing derived data ————*/
-  const { name = '', business = '' }             = state.userInfo   ?? {};
+  /*———————— derived data for legacy cards ————————*/
+  const { name = '', business = '' }                = state.userInfo   ?? {};
   const { industry = '', software = [], painPoints = [] } =
         state.selectors ?? {};
 
   const stack      = enrichStack(software);
   const painMatrix = mapPainPoints(painPoints);
 
-  /*———————————————— render —————————————*/
+  /*———————— render ————————————————————————————————*/
   return (
     <section className="space-y-10 pb-24">
-      {/* rich LLM sections */}
+
+      {/* GPT-4o rich sections */}
       <ExecSummary        data={llm.execSummary} />
       <UnusedIntegrations data={llm.unusedIntegrations} />
       <ImpactMatrix       data={llm.impactMatrix} />
@@ -68,7 +78,7 @@ export default function Report() {
       <RolloutTimeline    data={llm.rollout} />
       <RiskTable          data={llm.risks} />
 
-      {/* your original cards */}
+      {/* original wizard cards */}
       <SummaryCard      name={name}    business={business} />
       <IndustryInsights industry={industry} />
       <StackTable       stack={stack} />

@@ -13,7 +13,7 @@ export default function Step4AutomationIdea() {
   const onSubmit = async (d: FormData) => {
     dispatch({ type: 'SET_IDEA', payload: d.idea });
 
-    const res = await fetch('/api/generatePlan', {
+    const res = await fetch('/api/generateReport', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
