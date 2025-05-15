@@ -7,7 +7,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { selectors, userInfo } = JSON.parse(req.body);
 
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: 'gpt-3.5-turbo',
     max_tokens: 2200,
     temperature: 0.4,
     messages: [
