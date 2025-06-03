@@ -1,7 +1,7 @@
 // File: src/components/Report/Report.tsx
 import React from "react";
 
-/* ─── types ──────────────────────────────────────────────── */
+/* ──────── types ──────── */
 export type Integration = { integration: string; reason: string; potentialBenefit: string };
 export type Initiative  = { initiative : string; benefit: string };
 export type Playbook    = { name: string; steps: string[] };
@@ -12,30 +12,25 @@ export type ReportData = {
   execSummary?: string;
   unusedIntegrations?: Integration[];
   impactMatrix?: {
-    highImpact?  : Initiative[];
+    highImpact?: Initiative[];
     mediumImpact?: Initiative[];
-    lowImpact?   : Initiative[];
+    lowImpact?: Initiative[];
   };
   playbooks?: Playbook[];
-  rollout?:   { phases?: Phase[] };
-  risks?:     Risk[];
+  rollout?: { phases?: Phase[] };
+  risks?: Risk[];
 };
-
 export type ReportProps = { data: ReportData };
 
-/* ─── component ──────────────────────────────────────────── */
-export default function Report({ data }: ReportProps) {
-  /* helpers that guarantee an array */
-  const init  = (arr: Initiative[]   | undefined)  => arr ?? [];
-  const integ = (arr: Integration[]  | undefined)  => arr ?? [];
-  const ph    = (arr: Phase[]        | undefined)  => arr ?? [];
-  const pb    = (arr: Playbook[]     | undefined)  => arr ?? [];
-  const rk    = (arr: Risk[]         | undefined)  => arr ?? [];
+/* helper that always returns an array */
+const safe = <T,>(arr: T[] | undefined) => arr ?? [];
 
+/* ──────── component ──────── */
+export default function Report({ data }: ReportProps) {
   return (
     <div className="space-y-8 text-sm">
 
-      {/* ── Executive summary ───────────────────────────── */}
+      {/* Executive summary */}
       {data.execSummary && (
         <section>
           <h2 className="text-xl font-semibold">Executive Summary</h2>
@@ -43,18 +38,18 @@ export default function Report({ data }: ReportProps) {
         </section>
       )}
 
-      {/* ── Impact matrix ──────────────────────────────── */}
+      {/* Impact matrix */}
       {data.impactMatrix && (
         <section>
           <h2 className="text-xl font-semibold">Impact Matrix</h2>
           <div className="grid grid-cols-3 gap-4 mt-4">
-            {(["highImpact","mediumImpact","lowImpact"] as const).map(key => (
+            {(["highImpact","mediumImpact","lowImpact"] as const).map(key=>(
               <div key={key}>
                 <h3 className="font-medium capitalize">{key.replace("Impact"," Impact")}</h3>
                 <ul className="list-disc list-inside">
-                  {init(data.impactMatrix?.[key]).map((itm,i)=>
-                    <li key={i}><strong>{itm.initiative}</strong>: {itm.benefit}</li>
-                  )}
+                  {safe(data.impactMatrix?.[key]).map((it,i)=>(
+                    <li key={i}><strong>{it.initiative}</strong>: {it.benefit}</li>
+                  ))}
                 </ul>
               </div>
             ))}
@@ -62,37 +57,35 @@ export default function Report({ data }: ReportProps) {
         </section>
       )}
 
-      {/* ── Unused integrations ────────────────────────── */}
-      {!!integ(data.unusedIntegrations).length && (
+      {/* Unused integrations */}
+      {!!safe(data.unusedIntegrations).length && (
         <section>
           <h2 className="text-xl font-semibold">Unused Integrations</h2>
           <ul className="list-disc list-inside">
-            {integ(data.unusedIntegrations).map((u,i)=>
-              <li key={i}>
-                <strong>{u.integration}</strong> — {u.reason}. <em>{u.potentialBenefit}</em>
-              </li>
-            )}
+            {safe(data.unusedIntegrations).map((u,i)=>(
+              <li key={i}><strong>{u.integration}</strong> — {u.reason}. <em>{u.potentialBenefit}</em></li>
+            ))}
           </ul>
         </section>
       )}
 
-      {/* ── Playbooks ──────────────────────────────────── */}
-      {!!pb(data.playbooks).length && (
+      {/* Playbooks */}
+      {!!safe(data.playbooks).length && (
         <section>
           <h2 className="text-xl font-semibold">Playbooks</h2>
-          {pb(data.playbooks).map((p,i)=>(
+          {safe(data.playbooks).map((pb,i)=>(
             <div key={i} className="mb-4">
-              <h3 className="font-medium">{p.name}</h3>
+              <h3 className="font-medium">{pb.name}</h3>
               <ol className="list-decimal list-inside ml-4">
-                {p.steps.map((s,j)=><li key={j}>{s}</li>)}
+                {pb.steps.map((s,j)=><li key={j}>{s}</li>)}
               </ol>
             </div>
           ))}
         </section>
       )}
 
-      {/* ── Roll-out timeline ───────────────────────────── */}
-      {!!ph(data.rollout?.phases).length && (
+      {/* Roll-out timeline */}
+      {!!safe(data.rollout?.phases).length && (
         <section>
           <h2 className="text-xl font-semibold">Roll-out Timeline</h2>
           <table className="w-full text-left border">
@@ -102,7 +95,7 @@ export default function Report({ data }: ReportProps) {
                   <th className="border px-2 py-1">Activities</th></tr>
             </thead>
             <tbody>
-              {ph(data.rollout?.phases).map((p,i)=>(
+              {safe(data.rollout?.phases).map((p,i)=>(
                 <tr key={i}>
                   <td className="border px-2 py-1">{p.phase}</td>
                   <td className="border px-2 py-1">{p.duration}</td>
@@ -118,12 +111,12 @@ export default function Report({ data }: ReportProps) {
         </section>
       )}
 
-      {/* ── Risks ──────────────────────────────────────── */}
-      {!!rk(data.risks).length && (
+      {/* Risks */}
+      {!!safe(data.risks).length && (
         <section>
           <h2 className="text-xl font-semibold">Risks & Mitigations</h2>
           <ul className="list-disc list-inside">
-            {rk(data.risks).map((r,i)=>(
+            {safe(data.risks).map((r,i)=>(
               <li key={i}><strong>{r.risk}</strong>: {r.mitigation}</li>
             ))}
           </ul>
@@ -132,4 +125,3 @@ export default function Report({ data }: ReportProps) {
     </div>
   );
 }
-
