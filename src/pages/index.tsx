@@ -2,7 +2,7 @@
 'use client';
 
 import { useAuditState } from '@/context/AuditContext';
-import Report from '@/components/Report/Report';
+import Report from '@/components/Report';
 
 export default function Page() {
   const { report } = useAuditState();
