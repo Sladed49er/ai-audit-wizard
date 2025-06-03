@@ -10,7 +10,7 @@ export default function HomePage() {
 
   if (!report) {
     return (
-      <p className="text-center mt-20 text-lg text-gray-500">
+      <p className="text-center mt-24 text-lg text-gray-500">
         Generating report&hellip;
       </p>
     );
