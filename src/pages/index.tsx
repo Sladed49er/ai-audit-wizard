@@ -1,45 +1,54 @@
-// -------------------------------------------------------------
-// Wizard shell + step router
-// -------------------------------------------------------------
+// File: src/pages/index.tsx
 'use client';
 
-import { useAuditState }     from '@/context/AuditContext';
+import { AuditProvider, useAuditState } from '@/context/AuditContext';
 
-/* ── step components ──────────────────────────────────────── */
-import Step1UserInfo         from '@/components/Step1UserInfo';
-import Step2Selectors        from '@/components/Step2Selectors';
-import Step3Integrations     from '@/components/Step3Integrations';
-import Step4AutomationIdea   from '@/components/Step4AutomationIdea';
+import Step1UserInfo        from '@/components/Step1UserInfo';
+import Step2Selectors       from '@/components/Step2Selectors';
+import Step3Integrations    from '@/components/Step3Integrations';
+import Step4AutomationIdea  from '@/components/Step4AutomationIdea';
+import Report               from '@/components/Report';
 
-/* ── final report ─────────────────────────────────────────── */
-import Report                from '@/components/Report';
+function WizardBody() {
+  const { step, report } = useAuditState();
 
-/* ── tiny loader ──────────────────────────────────────────── */
-import Spinner               from '@/components/ui/Spinner';
-
-export default function WizardRouter() {
-  const state = useAuditState();
-
-  /* --------------- normal wizard flow --------------------- */
-  if (state.step === 1)  return <Step1UserInfo />;
-  if (state.step === 2)  return <Step2Selectors />;
-  if (state.step === 3)  return <Step3Integrations />;
-  if (state.step === 4)  return <Step4AutomationIdea />;
-
-  /* --------------- waiting for OpenAI --------------------- */
-  if (!state.report) {
+  if (report) {
+    /* ----- finished: show printable report -------------------- */
     return (
-      <div className="flex h-[60vh] flex-col items-center justify-center">
-        <Spinner />
-        <p className="mt-4 text-gray-600">Generating report&hellip;</p>
-      </div>
+      <section className="mx-auto max-w-5xl p-6">
+        <Report data={report} />
+      </section>
     );
   }
 
-  /* --------------- final screen --------------------------- */
+  /* ----- still collecting answers ----------------------------- */
+  switch (step) {
+    case 1:  return <Step1UserInfo />;
+    case 2:  return <Step2Selectors />;
+    case 3:  return <Step3Integrations />;
+    case 4:  return <Step4AutomationIdea />;
+    default: return (
+      <div className="flex h-96 items-center justify-center">
+        <div className="flex items-center gap-2 text-sky-600">
+          <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
+            <circle
+              cx="12" cy="12" r="10"
+              stroke="currentColor" strokeWidth="4" fill="none"
+              strokeLinecap="round"
+              strokeDasharray="60 24"
+            />
+          </svg>
+          <span>Generating report…</span>
+        </div>
+      </div>
+    );
+  }
+}
+
+export default function Page() {
   return (
-    <section className="mx-auto max-w-5xl space-y-12 p-4">
-      <Report data={state.report} />
-    </section>
+    <AuditProvider>
+      <WizardBody />
+    </AuditProvider>
   );
 }
