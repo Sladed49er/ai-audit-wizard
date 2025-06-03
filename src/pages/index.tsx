@@ -1,37 +1,24 @@
-// src/pages/index.tsx
-import { useRouter } from 'next/router';
-import { AuditProvider, useAuditState } from '@/context/AuditContext';
+// File: src/pages/index.tsx
 
-import Step1UserInfo       from '@/components/Step1UserInfo';
-import Step2Selectors      from '@/components/Step2Selectors';
-import Step3Integrations   from '@/components/Step3Integrations';
-import Step4AutomationIdea from '@/components/Step4AutomationIdea';
-import Report              from '@/components/Report';
+'use client';
 
-export default function Home() {
-  const { query } = useRouter();
-  const embed = query.embed === '1' || query.embed === 'true';
+import { useAuditState } from '@/context/AuditContext';
+import Report from '@/components/Report';
 
-  return (
-    <AuditProvider>
-      <WizardShell embed={embed} />
-    </AuditProvider>
-  );
-}
+export default function HomePage() {
+  const { report } = useAuditState();
 
-function WizardShell({ embed }: { embed: boolean }) {
-  /* ← FIX HERE (no array-destructuring) */
-  const state = useAuditState();
-
-  const wrapper = embed ? 'p-4' : 'mx-auto max-w-3xl p-4';
+  if (!report) {
+    return (
+      <p className="text-center mt-20 text-lg text-gray-500">
+        Generating report&hellip;
+      </p>
+    );
+  }
 
   return (
-    <main className={wrapper}>
-      {state.step === 1 && <Step1UserInfo />}
-      {state.step === 2 && <Step2Selectors />}
-      {state.step === 3 && <Step3Integrations />}
-      {state.step === 4 && <Step4AutomationIdea />}
-      {state.step === 5 && <Report />}
+    <main className="mx-auto max-w-5xl space-y-12 p-4">
+      <Report data={report} />
     </main>
   );
 }
