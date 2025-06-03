@@ -1,32 +1,29 @@
-// src/pages/index.tsx
-import Head from 'next/head';
-import { AuditProvider, useAuditState } from '@/context/AuditContext';
+// pages/index.tsx  (or /src/pages/index.tsx for older Next.js layouts)
+'use client';
 
-import Step1UserInfo       from '@/components/Step1UserInfo';
-import Step2Selectors      from '@/components/Step2Selectors';
-import Step3Integrations   from '@/components/Step3Integrations';
-import Step4AutomationIdea from '@/components/Step4AutomationIdea';
-import Report              from '@/components/Report';
+import { useAuditState }   from '@/context/AuditContext';
+import Report              from '@/components/Report/Report';   // ← new path
+import Spinner             from '@/components/ui/Spinner';      // tiny helper
 
-function WizardSteps() {
-  const { step, report } = useAuditState();
+export default function Home() {
+  const { report } = useAuditState();
 
-  if (step === 1) return <Step1UserInfo />;
-  if (step === 2) return <Step2Selectors />;
-  if (step === 3) return <Step3Integrations />;
-  if (step === 4) return <Step4AutomationIdea />;
+  /* 1️⃣  While we’re still waiting for /api/generatePlan
+   *     show a very light loader.
+   */
+  if (!report) {
+    return (
+      <div className="flex h-[70vh] items-center justify-center">
+        <Spinner className="mr-2 size-4" />
+        <span className="text-gray-600">Generating report…</span>
+      </div>
+    );
+  }
 
-  /* step 5 → finished */
-  return <Report data={report} />;
-}
-
-export default function WizardPage() {
+  /* 2️⃣  We have data – render the full printable report */
   return (
-    <AuditProvider>
-      <Head><title>Integration Radar Wizard</title></Head>
-      <main className="p-4 max-w-5xl mx-auto">
-        <WizardSteps />
-      </main>
-    </AuditProvider>
+    <main className="mx-auto max-w-4xl p-6">
+      <Report data={report} />
+    </main>
   );
 }
