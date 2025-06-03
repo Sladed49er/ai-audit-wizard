@@ -1,47 +1,45 @@
-/*  src/pages/index.tsx
-    ──────────────────────────────────────────────────────────────
-    Master page for the Integration-Radar wizard.
-    • steps 1-4  = form flow
-    • step 5     = waiting for OpenAI → spinner
-    • report set = printable report
-*/
+// -------------------------------------------------------------
+// Wizard shell + step router
+// -------------------------------------------------------------
 'use client';
 
-import { useAuditState }       from '@/context/AuditContext';
+import { useAuditState }     from '@/context/AuditContext';
 
-/* step components */
-import Step1UserInfo           from '@/components/Step1UserInfo';
-import Step2Selectors          from '@/components/Step2Selectors';
-import Step3Integrations       from '@/components/Step3Integrations';
-import Step4AutomationIdea     from '@/components/Step4AutomationIdea';
+/* ── step components ──────────────────────────────────────── */
+import Step1UserInfo         from '@/components/Step1UserInfo';
+import Step2Selectors        from '@/components/Step2Selectors';
+import Step3Integrations     from '@/components/Step3Integrations';
+import Step4AutomationIdea   from '@/components/Step4AutomationIdea';
 
-/* ui helpers */
-import Spinner                 from '@/components/ui/Spinner';
-import Report                  from '@/components/Report/Report';
+/* ── final report ─────────────────────────────────────────── */
+import Report                from '@/components/Report';
 
-export default function WizardPage() {
-  const { step, report } = useAuditState();
+/* ── tiny loader ──────────────────────────────────────────── */
+import Spinner               from '@/components/ui/Spinner';
 
-  /* ───────────── 1-4: user fills in details ───────────── */
-  if (step === 1) return <Step1UserInfo      />;
-  if (step === 2) return <Step2Selectors     />;
-  if (step === 3) return <Step3Integrations  />;
-  if (step === 4) return <Step4AutomationIdea/>;
+export default function WizardRouter() {
+  const state = useAuditState();
 
-  /* ───────────── 5: waiting for OpenAI ──────────────── */
-  if (!report) {
+  /* --------------- normal wizard flow --------------------- */
+  if (state.step === 1)  return <Step1UserInfo />;
+  if (state.step === 2)  return <Step2Selectors />;
+  if (state.step === 3)  return <Step3Integrations />;
+  if (state.step === 4)  return <Step4AutomationIdea />;
+
+  /* --------------- waiting for OpenAI --------------------- */
+  if (!state.report) {
     return (
-      <div className="flex h-[70vh] flex-col items-center justify-center gap-4">
-        <Spinner className="size-6 text-sky-600" />
-        <p className="text-gray-600">Generating report…</p>
+      <div className="flex h-[60vh] flex-col items-center justify-center">
+        <Spinner />
+        <p className="mt-4 text-gray-600">Generating report&hellip;</p>
       </div>
     );
   }
 
-  /* ───────────── 6: finished – show report ───────────── */
+  /* --------------- final screen --------------------------- */
   return (
-    <main className="mx-auto max-w-4xl p-6">
-      <Report data={report} />
-    </main>
+    <section className="mx-auto max-w-5xl space-y-12 p-4">
+      <Report data={state.report} />
+    </section>
   );
 }
